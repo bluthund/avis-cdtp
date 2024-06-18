@@ -39,7 +39,7 @@ function createTable(results) {
         row.forEach((value, index) => {
             if (results[0].columns[index] === 'ANSET')
                 // var qcode = 
-                html += `<td><div class="checkbox-container">${createCheckboxes(value,qcode)}</div></td>`;
+                html += `<td><div class="checkbox-container">${createCheckboxes(value)}</div></td>`;
             else
                 html += `<td>${value}</td>`;
             if (results[0].columns[index] === 'ANSRT') {
