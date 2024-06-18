@@ -1,92 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SQLite Database Example</title>
+    <title>(Debug) AVIS Candidate Test Portal</title>
     <script src="./lib/sql.js"></script>
+    <script src="./bin/app.js"></script>
+    <link rel="stylesheet" href="./bin/gui.css">
 </head>
-<body>
-    <input type="file" id="fileInput">
-
-    <input type="text" id="querySQL">
-    <button onclick="loadDatabase()">Run SQL Query</button>
-    <script>
-
-        async function urlToFile(url) {
-          const response = await fetch(url);
-          const buffer = await response.arrayBuffer();
-          return new Uint8Array(buffer);
-        }
-
-        qlist = "''";
-
-        async function loadDatabase() {
-            const fileUrl = './data/AV01_TPDB.db';
-            var ui8Array = new Uint8Array();
-            urlToFile(fileUrl).then(uint8Array => {
-              ui8Array = uint8Array;
-            });
-
-            const config = {
-                locateFile: (filename) => `/dist/${filename}`
-            };
-
-            initSqlJs(config).then((SQL) => {
-                const db = new SQL.Database(ui8Array);
-
-                // Example: Create a table
-                //db.run("CREATE TABLE test (col1, col2);");
-
-                const stmt = db.prepare("SELECT * FROM QBANK WHERE QDISC IN ('GEN') AND QCODE NOT IN (" + qlist + ") ORDER BY RANDOM() LIMIT 1");
-                while (stmt.step()) {
-                    const qaset = stmt.getAsObject();
-                    qlist += ",'" + qaset["QCODE"] + "'";
-                    document.getElementById("qTitle").innerHTML = qaset["QDESC"];
-                    const ansrt = qaset["ANSRT"].split('",').map(s => s.replace(/"/g, ''));
-                    const answg = qaset["ANSWG"].split('",').map(s => s.replace(/"/g, ''));
-
-                    var optrt = Math.floor(Math.random() * ansrt.length);
-                    var optwg = 4 - optrt;
-
-                    if (answg.length < optwg) {
-                        optrt += answg.length - optwg;
-                        optwg = answg.length;
-                    }
-
-                    for(var i = 0; i < 4; i++)
-                    {
-                        if(i < optrt)
-                            document.getElementById("O"+i.toString()).innerHTML = ansrt[i];
-                        else
-                            document.getElementById("O"+i.toString()).innerHTML = answg[i - optrt];
-                        document.getElementById("O"+i.toString()).style = "order:"+Math.floor(Math.random()).toString;
-
-                    }
-
-                }
-
-                /*const stmt = db.prepare("SELECT QCODE FROM QBANK WHERE QDISC IN ('GEN') ORDER BY RANDOM() LIMIT 5");
-                while (stmt.step()) {
-                    const qaset = stmt.getAsObject();
-                    console.log(qaset);
-                    // qlist += ",'" + qaset["QCODE"] + "'";
-                    document.getElementById("qTitle").innerHTML = qaset["QCODE"];
-
-                }
-                */
-
-                // Close the database when done
-                db.close();
-            });
-        }
-    </script>
-    <p id="qTitle"></p>
-    <div class="aList">
-        <div id="O0"></div>
-        <div id="O1"></div>
-        <div id="O2"></div>
-        <div id="O3"></div>
-    </div>
+<body style="font:Calibri;">
+    <input type="text" id="query" placeholder="Enter SQL query here">
+    <button onclick="executeQuery()">Execute Query</button>
+    <div id="output" class="checkbox-container"></div>
 </body>
 </html>
