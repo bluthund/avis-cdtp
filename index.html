@@ -7,8 +7,9 @@
     <link rel="stylesheet" href="./bin/gui.css">
 </head>
 <body style="font:Calibri;">
-    <input type="text" id="query" placeholder="Enter SQL query here">
-    <button onclick="executeQuery()">Execute Query</button>
-    <div id="output" class="checkbox-container"></div>
+    <button onclick="executeQuery()">Load database</button>
+    <input type="text" id="qnum" placeholder="Enter question number here">
+    <button onclick="createTable(document.getElementById('qnum').value)">Go to question</button>
+    <div id="output"></div>
 </body>
 </html>
