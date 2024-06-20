@@ -6,10 +6,10 @@
     <script src="./bin/app.js"></script>
     <link rel="stylesheet" href="./bin/gui.css">
 </head>
-<body style="font:Calibri;">
-    <button onclick="executeQuery()">Load database</button>
-    <input type="text" id="qnum" placeholder="Enter question number here">
-    <button onclick="createTable(document.getElementById('qnum').value)">Go to question</button>
+<body style="font:Calibri;" onload="initDB()">
+    <!-- <button onclick="executeQuery()">Load database</button> -->
+    <input type="text" id="qnum" oninput="document.getElementById('qbtn').innerHTML='Go to question'" placeholder="Enter question number here" value="1">
+    <button id="qbtn" onclick="qNumField(parseInt(document.getElementById('qnum').value))">Go to question</button>
     <div id="output"></div>
 </body>
 </html>
