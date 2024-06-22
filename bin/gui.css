@@ -1,12 +1,17 @@
 .checkbox-container {
     display: flex;
-    /*flex-wrap: wrap; /* Allow wrapping if needed */
+    flex-direction: column;
+    flex-wrap: wrap;
+}
+
+.checkbox-container:nth-child {
+    break-after: always;
+    wrap-after: flex;
 }
 
 body {
+  height: 100%;
+  overflow: hidden;
   font-family: Calibri;
 }
 
-input[type='checkbox'] + label {
-  display: inline-block;
-}
