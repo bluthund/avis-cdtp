@@ -6,30 +6,86 @@ const cdres = {
 
 const optnum = 4;
 const cdisc = "CHEM";
-const url = "./data/AV01_TPDB.db";
-const key = "some-AES-key-here";
 const queries = [
     `SELECT QCODE,QDISC,QDESC,ANSET,ANSRT FROM QBANK WHERE QDISC IN ('GEN') ORDER BY RANDOM() LIMIT 10`,
     `SELECT QCODE,QDISC,QDESC,ANSET,ANSRT FROM QBANK WHERE QDISC IN ('${cdisc}') ORDER BY RANDOM() LIMIT 10`
 ];
 
-async function initDB() {
+async function downDB(file,flag)
+{ 
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([file],{type:'application/octet-binary'}));
+    a.download = 'AV01_TPDB.db' + (flag?'e':'');
+    document.body.appendChild(a);
+    a.click();
+}
+
+async function initDB(pass,flag) {
     try {
+        const url = "./data/AV01_TPDB.db" + (flag?'':'e');
         const res = await fetch(url);
-        const encData = await res.arrayBuffer();
-        const SQL = await initSqlJs();
-        const decData = await decryptDB(encData,key);
-        const results = new Array();
-        queries.forEach(query => {
-            results.push(executeQuery(new SQL.Database(new Uint8Array(decData)),query));
-        });
+        const data = await res.arrayBuffer();
+        const passKey = await newAESKey(pass);
+
+        if (flag) {
+            const encData = await cryptDB(data,passKey,true);
+            downDB(encData,flag);
+        } else {
+            const decData = await cryptDB(data,passKey,false);
+            const SQL = await initSqlJs();
+            const results = new Array();
+            queries.forEach(query => {
+                results.push(executeQuery(new SQL.Database(new Uint8Array(decData)),query));
+            });
+        }
     } catch (err) {
         console.log(err);
     }
 }
 
-async function decryptDB(data,key) {
-    return data;
+async function newAESKey(passPhrase) {
+    const encoder = new TextEncoder();
+    const passKey = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(passPhrase),
+        { name: 'PBKDF2' },
+        false,
+        ['deriveKey']
+    );
+    const aesKey = await crypto.subtle.deriveKey(
+        {
+            name: 'PBKDF2',
+            salt: new Uint8Array(16),
+            iterations: 1,
+            hash: 'SHA-256',
+        },
+        passKey,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['encrypt', 'decrypt']
+    );
+    return aesKey;
+}
+
+async function cryptDB(data,key,flag) {
+    if (flag)
+        return window.crypto.subtle.encrypt(
+            {
+                name: "AES-GCM",
+                iv: new Uint8Array(12),
+            },
+            key,
+            data
+        );
+    else
+        return window.crypto.subtle.decrypt(
+            {
+                name: "AES-GCM",
+                iv: new Uint8Array(12),
+            },
+            key,
+            data
+        );
 }
 
 async function executeQuery(db,query) {
@@ -40,6 +96,11 @@ async function executeQuery(db,query) {
         console.error(err);
         alert('Error executing query: ' + err.message);
     }
+}
+
+function hideShow(eID1,eID2) {
+    document.getElementById(eID1).style.display = 'none';
+    document.getElementById(eID2).style.display = 'block';
 }
 
 function populateTP(results) {
