@@ -7,16 +7,27 @@
     <link rel="stylesheet" href="./bin/gui.css">
 </head>
 <body>
-    <div id="CDTP-Init">
-        <input type="password" id="pass" placeholder="Enter passphrase">
-        <button onclick="initDB(document.getElementById('pass').value,true)">Encrypt</button>
-        <button onclick="hideShow('CDTP-Init','CDTP-Main');initDB(document.getElementById('pass').value,false)">Decrypt</button>
-    </div>
-    <div id="CDTP-Main" style="display:none;">
-        <img src="./bin/banner.png" width="256px">
-        <div id="output"></div>
-        <input type="text" id="qnum" oninput="document.getElementById('qbtn').innerHTML='Go to question'" placeholder="Enter question number here" value="1">
-        <button id="qbtn" onclick="qNumField(parseInt(document.getElementById('qnum').value))">Go to question</button>
+    <div class="CDTP">
+        <div class="CDTP-Init">
+            <img src="./bin/banner.png" width="256px"><p><b>Authentication</b></p>
+            <input type="password" id="pass" placeholder="Enter passphrase">
+            <button onclick="initDB(document.getElementById('pass').value,true)">Encrypt</button>
+            <button onclick="
+                hideShow('CDTP-Init','CDTP-Main');
+                initDB(document.getElementById('pass').value,false);">Decrypt</button>
+        </div>
+        <div class="CDTP-Main" style="display:none;">
+            <img src="./bin/banner.png" width="256px">
+            <div id="output"></div>
+            <input type="text" id="qnum" oninput="document.getElementById('qbtn').innerHTML='Go to question'" placeholder="Enter question number here" value="1">
+            <button id="qbtn" onclick="qNumField(parseInt(document.getElementById('qnum').value))">Go to question</button>
+        </div>
+        <div class="CDTP-Debug" style="display:none;">
+            <b>Debug log</b><p></p>
+            <div class="debug">
+                <div data-active="true"></div>
+            </div>
+        </div>
     </div>
 </body>
 </html>

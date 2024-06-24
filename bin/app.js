@@ -99,9 +99,9 @@ async function executeQuery(db,query) {
     }
 }
 
-function hideShow(eID1,eID2) {
-    document.getElementById(eID1).style.display = 'none';
-    document.getElementById(eID2).style.display = 'block';
+async function hideShow(eID1,eID2) {
+    document.querySelector(`div[class=${eID1}]`).style.display = 'none';
+    document.querySelector(`div[class=${eID2}]`).style.display = 'block';
 }
 
 function populateTP(results) {
@@ -167,20 +167,42 @@ function createTable(qnum) {
         let check = "";
         if (cdres.alist.ansel[qnum].indexOf(i) > -1)
             check = "checked";
-        html += `<div style="order:${cdres.alist.arand[qnum][i-1]};"><input type="checkbox" style="order:${cdres.alist.arand[qnum][i-1]};" class="ansel_${qnum}" id="${i}" onchange="updateSelectedOptions('${qnum}')" ${check}><div class="label"><label style="order:${cdres.alist.arand[qnum][i-1]};" for="${i}">${cdres.alist.anset[qnum][i-1]}</label></div></div>`;
+        html += `
+            <div class="option" style="order:${cdres.alist.arand[qnum][i-1]};">
+                <div class="opt_checkbox">
+                    <input 
+                        type="checkbox" 
+                        style="order:${cdres.alist.arand[qnum][i-1]};" 
+                        class="ansel_${qnum}" 
+                        id="${i}" 
+                        onchange="
+                            hideShow('CDTP-Init','CDTP-Debug');
+                            updateSelectedOptions('${qnum}')" 
+                        ${check}>
+                </div>
+                <div class="opt_label">
+                    <label 
+                        style="order:${cdres.alist.arand[qnum][i-1]};" 
+                        for="${i}">${cdres.alist.anset[qnum][i-1]}
+                    </label>
+                </div>
+            </div>`;
     }
-    html += `</div><div id="score_${qnum}"></div>`;
+    html += `</div>`;
     document.getElementById('output').innerHTML = html;
-    console.log(cdres);
 }
 
 // Function to update the selected options string
 function updateSelectedOptions(qnum) {
     const checkboxes = document.querySelectorAll(`input[class="ansel_${qnum}"]:checked`);
+    const debugLog = document.querySelector(`div[data-active="true"]`);
     cdres.alist.ansel[qnum] = Array.from(checkboxes).map(cb => parseInt(cb.id));
     cdres.score[qnum] = scoreCalc(qnum);
-    document.getElementById(`score_${qnum}`).innerHTML = `<br>Question code: ${cdres.qlist.qcode[qnum]}<br>Score: ${scoreCalc(qnum)}`;
-    qNumField(qnum);
+    debugLog.innerHTML = `
+        <i>
+            <b>Question code:</b> ${cdres.qlist.qcode[qnum]}<br>
+            <b>Score:</b> ${scoreCalc(qnum)}
+        </i>`;
 }
 
 function scoreCalc(qnum) {
@@ -193,6 +215,10 @@ function scoreCalc(qnum) {
 function qNumField(qnum) {
     const qbtnText = document.getElementById('qbtn');
     const qnumText = document.getElementById('qnum');
+    const cdtpDbg = document.querySelector(`div[class="debug"]`);
+    const debugLog = document.querySelector(`div[data-active="true"]`);
+    debugLog.dataset.active = "false";
+    cdtpDbg.innerHTML = `<div data-active="true"></div>` + cdtpDbg.innerHTML;
     if (Number.isInteger(qnum)) {
         if (qnum < 20 && qnum > 0) {
             switch(qbtnText.innerHTML) {
