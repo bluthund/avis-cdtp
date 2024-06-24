@@ -37,6 +37,7 @@ async function initDB(pass,flag) {
             queries.forEach(query => {
                 results.push(executeQuery(new SQL.Database(new Uint8Array(decData)),query));
             });
+            db.close();
         }
     } catch (err) {
         console.log(err);
@@ -166,7 +167,7 @@ function createTable(qnum) {
         let check = "";
         if (cdres.alist.ansel[qnum].indexOf(i) > -1)
             check = "checked";
-        html += `<div style="order:${cdres.alist.arand[qnum][i-1]};"><input type="checkbox" style="order:${cdres.alist.arand[qnum][i-1]};" class="ansel_${qnum}" id="${i}" onchange="updateSelectedOptions('${qnum}')" ${check}><label style=style="order:${cdres.alist.arand[qnum][i-1]};" for="${i}">${cdres.alist.anset[qnum][i-1]}</label></div>`;
+        html += `<div style="order:${cdres.alist.arand[qnum][i-1]};"><input type="checkbox" style="order:${cdres.alist.arand[qnum][i-1]};" class="ansel_${qnum}" id="${i}" onchange="updateSelectedOptions('${qnum}')" ${check}><div class="label"><label style="order:${cdres.alist.arand[qnum][i-1]};" for="${i}">${cdres.alist.anset[qnum][i-1]}</label></div></div>`;
     }
     html += `</div><div id="score_${qnum}"></div>`;
     document.getElementById('output').innerHTML = html;
