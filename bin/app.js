@@ -5,10 +5,11 @@ const cdres = {
 };
 
 const optnum = 4;
+const qpersec = 10;
 const cdisc = "CHEM";
 const queries = [
-    `SELECT QCODE,QDISC,QDESC,ANSET,ANSRT FROM QBANK WHERE QDISC IN ('GEN') ORDER BY RANDOM() LIMIT 10`,
-    `SELECT QCODE,QDISC,QDESC,ANSET,ANSRT FROM QBANK WHERE QDISC IN ('${cdisc}') ORDER BY RANDOM() LIMIT 10`
+    `SELECT QCODE,QDISC,QDESC,ANSET,ANSRT FROM QBANK WHERE QDISC IN ('GEN') ORDER BY RANDOM() LIMIT ${qpersec}`,
+    `SELECT QCODE,QDISC,QDESC,ANSET,ANSRT FROM QBANK WHERE QDISC IN ('${cdisc}') ORDER BY RANDOM() LIMIT ${qpersec}`
 ];
 
 async function downDB(file,flag)
@@ -104,26 +105,31 @@ async function hideShow(eID1,eID2) {
     document.querySelector(`div[class=${eID2}]`).style.display = 'block';
 }
 
+
+var i = 0;
 function populateTP(results) {
     results.forEach(result => {
-        result.columns.forEach((col, cdx) => {
-            result.values.forEach((row, rdx) => {
+        result.columns.forEach((col,cdx) => {
+            result.values.forEach((row,rdx) => {
                 switch (col) {
                     case 'QCODE':
                         cdres.qlist.qcode.push(row[cdx]);
-                        cdres.score.push(0);
-                        break;
-                    case 'QDISC':
+                        document.getElementById("prog").innerHTML += `
+                            <div 
+                                id="${i++}_prog"
+                                data-attempt="false" 
+                                onclick="qNumField(parseInt(this.id))">
+                            </div>`;
                         cdres.qlist.qdisc.push(row[cdx]);
                         break;
                     case 'QDESC':
                         cdres.qlist.qdesc.push(row[cdx]);
                         break;
                     case 'ANSET':
-                        popTP_ANSET(row, cdx, rdx);
+                        popTP_ANSET(row,cdx,rdx);
                         break;
                     case 'ANSRT':
-                        popTP_ANSRT(row, cdx, rdx);
+                        popTP_ANSRT(row,cdx,rdx);
                         break;
                 }
             });
@@ -131,13 +137,13 @@ function populateTP(results) {
     });
 }
 
-function popTP_ANSET(row, cdx, rdx) {
+function popTP_ANSET(row,cdx,rdx) {
     cdres.alist.anset.push(row[cdx].slice(1,-1).replace(/","/g,'---').split('---'));
     cdres.alist.arand.push(Array.from({length:optnum},() => Math.floor(Math.random() * 1000)));
     cdres.alist.ansel.push(Array.from({length:optnum},() => 0));
 }
 
-function popTP_ANSRT(row, cdx, rdx) {
+function popTP_ANSRT(row,cdx,rdx) {
     let opt = row[cdx].split(',').map(Number);
     cdres.alist.ansrt.push(opt);
     popTP_Trim(rdx);
@@ -167,12 +173,13 @@ function createTable(qnum) {
         let check = "";
         if (cdres.alist.ansel[qnum].indexOf(i) > -1)
             check = "checked";
+        const random = cdres.alist.arand[qnum][i-1];
         html += `
-            <div class="option" style="order:${cdres.alist.arand[qnum][i-1]};">
+            <div class="option" style="order:${random};">
                 <div class="opt_checkbox">
                     <input 
                         type="checkbox" 
-                        style="order:${cdres.alist.arand[qnum][i-1]};" 
+                        style="order:${random};" 
                         class="ansel_${qnum}" 
                         id="${i}" 
                         onchange="
@@ -182,7 +189,7 @@ function createTable(qnum) {
                 </div>
                 <div class="opt_label">
                     <label 
-                        style="order:${cdres.alist.arand[qnum][i-1]};" 
+                        style="order:${random};" 
                         for="${i}">${cdres.alist.anset[qnum][i-1]}
                     </label>
                 </div>
@@ -196,6 +203,10 @@ function createTable(qnum) {
 function updateSelectedOptions(qnum) {
     const checkboxes = document.querySelectorAll(`input[class="ansel_${qnum}"]:checked`);
     const debugLog = document.querySelector(`div[data-active="true"]`);
+    if (checkboxes.length > 0)
+        document.getElementById(`${qnum}_prog`).dataset.attempt = "true";
+    else
+        document.getElementById(`${qnum}_prog`).dataset.attempt = "false";
     cdres.alist.ansel[qnum] = Array.from(checkboxes).map(cb => parseInt(cb.id));
     cdres.score[qnum] = scoreCalc(qnum);
     debugLog.innerHTML = `
@@ -217,6 +228,7 @@ function qNumField(qnum) {
     const qnumText = document.getElementById('qnum');
     const cdtpDbg = document.querySelector(`div[class="debug"]`);
     const debugLog = document.querySelector(`div[data-active="true"]`);
+    qnumText.value = qnum;
     debugLog.dataset.active = "false";
     cdtpDbg.innerHTML = `<div data-active="true"></div>` + cdtpDbg.innerHTML;
     if (Number.isInteger(qnum)) {
