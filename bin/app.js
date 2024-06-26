@@ -5,40 +5,35 @@ const cdres = {
 };
 
 const optnum = 4;
-const qpersec = 10;
-const cdisc = "CHEM";
-const queries = [
-    `SELECT QCODE,QDISC,QDESC,ANSET,ANSRT FROM QBANK WHERE QDISC IN ('GEN') ORDER BY RANDOM() LIMIT ${qpersec}`,
-    `SELECT QCODE,QDISC,QDESC,ANSET,ANSRT FROM QBANK WHERE QDISC IN ('${cdisc}') ORDER BY RANDOM() LIMIT ${qpersec}`
-];
+const qdisc = ['GEN','MECH','CHEM'];
+const qperdisc = [5,2,2];
 
-async function downDB(file,flag)
+async function downDB(file,edFlag)
 { 
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([file],{type:'application/octet-binary'}));
-    a.download = 'AV01_TPDB.db' + (flag?'e':'');
+    a.download = 'AV01_TPDB.db' + (edFlag?'e':'');
     document.body.appendChild(a);
     a.click();
 }
 
-async function initDB(pass,flag) {
+async function initDB(passPhrase,edFlag) {
     try {
-        const url = "./data/AV01_TPDB.db" + (flag?'':'e');
+        const url = "./data/AV01_TPDB.db" + (edFlag?'':'e');
         const res = await fetch(url);
         const data = await res.arrayBuffer();
-        const passKey = await newAESKey(pass);
+        const passKey = await newAESKey(passPhrase);
 
-        if (flag) {
+        if (edFlag) {
             const encData = await cryptDB(data,passKey,true);
-            downDB(encData,flag);
+            downDB(encData,edFlag);
         } else {
             const decData = await cryptDB(data,passKey,false);
             const SQL = await initSqlJs();
             const results = new Array();
-            queries.forEach(query => {
-                results.push(executeQuery(new SQL.Database(new Uint8Array(decData)),query));
+            qdisc.forEach((qd,qdx) => {
+                results.push(executeQuery(new SQL.Database(new Uint8Array(decData)),`SELECT QCODE,QDISC,QDESC,ANSET,ANSRT FROM QBANK WHERE QDISC IN ('${qd}') ORDER BY RANDOM() LIMIT ${qperdisc[qdx]}`));
             });
-            db.close();
         }
     } catch (err) {
         console.log(err);
@@ -69,8 +64,8 @@ async function newAESKey(passPhrase) {
     return aesKey;
 }
 
-async function cryptDB(data,key,flag) {
-    if (flag)
+async function cryptDB(data,key,edFlag) {
+    if (edFlag)
         return window.crypto.subtle.encrypt(
             {
                 name: "AES-GCM",
@@ -105,8 +100,6 @@ async function hideShow(eID1,eID2) {
     document.querySelector(`div[class=${eID2}]`).style.display = 'block';
 }
 
-
-var i = 0;
 function populateTP(results) {
     results.forEach(result => {
         result.columns.forEach((col,cdx) => {
@@ -114,12 +107,6 @@ function populateTP(results) {
                 switch (col) {
                     case 'QCODE':
                         cdres.qlist.qcode.push(row[cdx]);
-                        document.getElementById("prog").innerHTML += `
-                            <div 
-                                id="${i++}_prog"
-                                data-attempt="false" 
-                                onclick="qNumField(parseInt(this.id))">
-                            </div>`;
                         cdres.qlist.qdisc.push(row[cdx]);
                         break;
                     case 'QDESC':
@@ -138,7 +125,7 @@ function populateTP(results) {
 }
 
 function popTP_ANSET(row,cdx,rdx) {
-    cdres.alist.anset.push(row[cdx].slice(1,-1).replace(/","/g,'---').split('---'));
+    cdres.alist.anset.push(row[cdx].split(/\r?\n/));
     cdres.alist.arand.push(Array.from({length:optnum},() => Math.floor(Math.random() * 1000)));
     cdres.alist.ansel.push(Array.from({length:optnum},() => 0));
 }
@@ -223,35 +210,58 @@ function scoreCalc(qnum) {
     return ((c>0)?(s/c):0) - ((optnum>c)?(sl-s)/(optnum-c):0);
 }
 
+function renameCat(str) {
+    const replacements = new Map([
+        ['GEN','General'],
+        ['APT','Aptitude'],
+        ['MECH','Mechanical'],
+        ['CHEM','Chemical'],
+        ['INST','Instrumentation'],
+        ['ELEC','Electrical']
+    ]);
+    for (const [word, replacement] of replacements.entries()) {
+        const regex = new RegExp(`\\b${word}\\b`, 'gi');
+        str = str.replace(regex, replacement);
+    }
+    return str;
+}
+
+function progTrack() {
+    var secTot = 0;
+    const progDiv = document.getElementById("prog");
+    qdisc.forEach((qd,qdx) => { 
+        progDiv.innerHTML += `<div><b>${renameCat(qd)}<b></div>`;
+        for(var i = secTot; i < (secTot + qperdisc[qdx]); i++) {
+            progDiv.innerHTML += `
+            <div 
+                id="${i}_prog"
+                data-attempt="false" 
+                onclick="qNumField(${i})">
+            </div>`;
+        }
+        secTot+= qperdisc[qdx];
+    });
+}
+
 function qNumField(qnum) {
     const qbtnText = document.getElementById('qbtn');
     const qnumText = document.getElementById('qnum');
     const cdtpDbg = document.querySelector(`div[class="debug"]`);
     const debugLog = document.querySelector(`div[data-active="true"]`);
+    var secTot = 0;
+    qperdisc.forEach(qpd => secTot += qpd);
+    if (qbtnText.innerHTML == 'Go to question') qnum--;
     qnumText.value = qnum;
     debugLog.dataset.active = "false";
     cdtpDbg.innerHTML = `<div data-active="true"></div>` + cdtpDbg.innerHTML;
     if (Number.isInteger(qnum)) {
-        if (qnum < 20 && qnum > 0) {
-            switch(qbtnText.innerHTML) {
-                case 'Next question':
-                    createTable(qnum);
-                    qnumText.value = qnum+1;
-                    if (qnum == 19)
-                        qbtnText.innerHTML = "Go to start";
-                    else
-                        qbtnText.innerHTML = "Next question";
-                    break;
-                case 'Go to question':
-                    createTable(qnum-1);
-                    qbtnText.innerHTML = "Next question";
-                    break;
-            }
-        }
-        if (qnum == 20 && qbtnText.innerHTML == 'Go to start') {
-            createTable(0);
-            qnumText.value = 1;
+        if (qnum < secTot && qnum >= 0) {
+            createTable(qnum);
+            qnumText.value = qnum+1;
             qbtnText.innerHTML = "Next question";
-        } 
-    } 
+        }
+        if (qnum == secTot-1) {
+            qbtnText.innerHTML = "Finish test";
+        }
+    }
 }

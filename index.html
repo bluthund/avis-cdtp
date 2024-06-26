@@ -15,19 +15,17 @@
             <button onclick="
                 hideShow('CDTP-Init','CDTP-Main');
                 hideShow('CDTP-Init','CDTP-Track');
-                initDB(document.getElementById('pass').value,false);">Decrypt</button>
+                initDB(document.getElementById('pass').value,false);
+                progTrack()">Decrypt</button>
         </div>
         <div class="CDTP-Main" style="display:none;">
             <img src="./bin/banner.png" width="256px">
             <div id="output"></div>
-
         </div>
         <div class="CDTP-Track" style="display:none;">
-            <b>Progress track</b><p></p>
-            <div id="prog">
-            </div>
-            <input type="text" id="qnum" oninput="document.getElementById('qbtn').innerHTML='Go to question'" placeholder="Enter question number here" value="1">
-            <button id="qbtn" onclick="qNumField(parseInt(document.getElementById('qnum').value))">Go to question</button>
+            <div id="prog"></div>
+            <input type="text" id="qnum" oninput="document.getElementById('qbtn').innerHTML='Go to question'"placeholder="Enter question number here" value="1">
+            <button id="qbtn" onclick="qNumField(parseInt(document.getElementById('qnum').value))">Next question</button>
         </div>
         <div class="CDTP-Debug" style="display:none;">
             <b>Debug log</b><p></p>
