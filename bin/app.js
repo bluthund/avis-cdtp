@@ -5,8 +5,8 @@ const cdres = {
 };
 
 const optnum = 4;
-const qdisc = ['GEN','MECH','CHEM'];
-const qperdisc = [5,2,2];
+const qdisc = ['GEN','MECH','CHEM','INST','ELEC'];
+const qperdisc = [5,5,5,5,5];
 
 async function downDB(file,edFlag)
 { 
@@ -199,7 +199,7 @@ function updateSelectedOptions(qnum) {
     debugLog.innerHTML = `
         <i>
             <b>Question code:</b> ${cdres.qlist.qcode[qnum]}<br>
-            <b>Score:</b> ${scoreCalc(qnum)}
+            <b>Score:</b> ${Math.floor(scoreCalc(qnum)*100)/100}
         </i>`;
 }
 
