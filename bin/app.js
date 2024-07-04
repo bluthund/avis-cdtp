@@ -8,6 +8,13 @@ const optnum = 4;
 const qdisc = ['GEN','MECH','CHEM','INST','ELEC'];
 const qperdisc = [5,5,5,5,5];
 
+async function sha256(passPhrase) {
+    const msgBuffer = new TextEncoder().encode(passPhrase);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => ('00' + b.toString(16)).slice(-2)).join('');
+    return hashHex;
+}
 async function downDB(file,edFlag)
 { 
     const a = document.createElement('a');
@@ -19,7 +26,7 @@ async function downDB(file,edFlag)
 
 async function initDB(passPhrase,edFlag) {
     try {
-        const url = "./data/AV01_TPDB.db" + (edFlag?'':'e');
+        const url = './data/AV01_TPDB.db' + (edFlag?'':'e');
         const res = await fetch(url);
         const data = await res.arrayBuffer();
         const passKey = await newAESKey(passPhrase);
@@ -35,8 +42,9 @@ async function initDB(passPhrase,edFlag) {
                 results.push(executeQuery(new SQL.Database(new Uint8Array(decData)),`SELECT QCODE,QDISC,QDESC,ANSET,ANSRT FROM QBANK WHERE QDISC IN ('${qd}') ORDER BY RANDOM() LIMIT ${qperdisc[qdx]}`));
             });
         }
+        return true;
     } catch (err) {
-        console.log(err);
+        return false;
     }
 }
 
@@ -68,7 +76,7 @@ async function cryptDB(data,key,edFlag) {
     if (edFlag)
         return window.crypto.subtle.encrypt(
             {
-                name: "AES-GCM",
+                name: 'AES-GCM',
                 iv: new Uint8Array(12),
             },
             key,
@@ -77,7 +85,7 @@ async function cryptDB(data,key,edFlag) {
     else
         return window.crypto.subtle.decrypt(
             {
-                name: "AES-GCM",
+                name: 'AES-GCM',
                 iv: new Uint8Array(12),
             },
             key,
@@ -95,9 +103,9 @@ async function executeQuery(db,query) {
     }
 }
 
-async function hideShow(eID1,eID2) {
-    document.querySelector(`div[class=${eID1}]`).style.display = 'none';
-    document.querySelector(`div[class=${eID2}]`).style.display = 'block';
+async function gotoPage(hideID,showID) {
+    hideID.forEach(eID => {document.querySelector(`div[class='CDTP'] > div[id='${eID}']`).style.display = 'none';});
+    showID.forEach(eID => {document.querySelector(`div[class='CDTP'] > div[id='${eID}']`).style.display = 'block';});
 }
 
 function populateTP(results) {
@@ -153,31 +161,31 @@ function popTP_Trim(rdx) {
 }
 
 function createTable(qnum) {
-    let html = `<div class="qname_${qnum}"><b>${cdres.qlist.qdesc[qnum]}</b></div>`;
-    html += `<div class="checkbox-container">`;
+    let html = `<div class='qname_${qnum}'><b>${cdres.qlist.qdesc[qnum]}</b></div>`;
+    html += `<div class='checkbox-container'>`;
     for(var i = 1; i <= optnum; i++)
     {
-        let check = "";
+        let check = '';
         if (cdres.alist.ansel[qnum].indexOf(i) > -1)
-            check = "checked";
+            check = 'checked';
         const random = cdres.alist.arand[qnum][i-1];
         html += `
-            <div class="option" style="order:${random};">
-                <div class="opt_checkbox">
+            <div class='option' style='order:${random};'>
+                <div class='opt_checkbox'>
                     <input 
-                        type="checkbox" 
-                        style="order:${random};" 
-                        class="ansel_${qnum}" 
-                        id="${i}" 
-                        onchange="
-                            hideShow('CDTP-Init','CDTP-Debug');
-                            updateSelectedOptions('${qnum}')" 
+                        type='checkbox' 
+                        style='order:${random};' 
+                        class='ansel_${qnum}' 
+                        id='${i}' 
+                        onchange='
+                            gotoPage([],[3]);
+                            updateSelectedOptions('${qnum}')' 
                         ${check}>
                 </div>
-                <div class="opt_label">
+                <div class='opt_label'>
                     <label 
-                        style="order:${random};" 
-                        for="${i}">${cdres.alist.anset[qnum][i-1]}
+                        style='order:${random};' 
+                        for='${i}'>${cdres.alist.anset[qnum][i-1]}
                     </label>
                 </div>
             </div>`;
@@ -188,12 +196,12 @@ function createTable(qnum) {
 
 // Function to update the selected options string
 function updateSelectedOptions(qnum) {
-    const checkboxes = document.querySelectorAll(`input[class="ansel_${qnum}"]:checked`);
-    const debugLog = document.querySelector(`div[data-active="true"]`);
+    const checkboxes = document.querySelectorAll(`input[class='ansel_${qnum}']:checked`);
+    const debugLog = document.querySelector(`div[data-active='true']`);
     if (checkboxes.length > 0)
-        document.getElementById(`${qnum}_prog`).dataset.attempt = "true";
+        document.getElementById(`${qnum}_prog`).dataset.attempt = 'true';
     else
-        document.getElementById(`${qnum}_prog`).dataset.attempt = "false";
+        document.getElementById(`${qnum}_prog`).dataset.attempt = 'false';
     cdres.alist.ansel[qnum] = Array.from(checkboxes).map(cb => parseInt(cb.id));
     cdres.score[qnum] = scoreCalc(qnum);
     debugLog.innerHTML = `
@@ -228,15 +236,15 @@ function renameCat(str) {
 
 function progTrack() {
     var secTot = 0;
-    const progDiv = document.getElementById("prog");
+    const progDiv = document.getElementById('prog');
     qdisc.forEach((qd,qdx) => { 
         progDiv.innerHTML += `<div><b>${renameCat(qd)}<b></div>`;
         for(var i = secTot; i < (secTot + qperdisc[qdx]); i++) {
             progDiv.innerHTML += `
             <div 
-                id="${i}_prog"
-                data-attempt="false" 
-                onclick="qNumField(${i})">
+                id='${i}_prog'
+                data-attempt='false' 
+                onclick='qNumField(${i})'>
             </div>`;
         }
         secTot+= qperdisc[qdx];
@@ -246,22 +254,22 @@ function progTrack() {
 function qNumField(qnum) {
     const qbtnText = document.getElementById('qbtn');
     const qnumText = document.getElementById('qnum');
-    const cdtpDbg = document.querySelector(`div[class="debug"]`);
-    const debugLog = document.querySelector(`div[data-active="true"]`);
+    const cdtpDbg = document.querySelector(`div[class='debug']`);
+    const debugLog = document.querySelector(`div[data-active='true']`);
     var secTot = 0;
     qperdisc.forEach(qpd => secTot += qpd);
     if (qbtnText.innerHTML == 'Go to question') qnum--;
     qnumText.value = qnum;
-    debugLog.dataset.active = "false";
-    cdtpDbg.innerHTML = `<div data-active="true"></div>` + cdtpDbg.innerHTML;
+    debugLog.dataset.active = 'false';
+    cdtpDbg.innerHTML = `<div data-active='true'></div>` + cdtpDbg.innerHTML;
     if (Number.isInteger(qnum)) {
         if (qnum < secTot && qnum >= 0) {
             createTable(qnum);
             qnumText.value = qnum+1;
-            qbtnText.innerHTML = "Next question";
+            qbtnText.innerHTML = 'Next question';
         }
         if (qnum == secTot-1) {
-            qbtnText.innerHTML = "Finish test";
+            qbtnText.innerHTML = 'Finish test';
         }
     }
 }

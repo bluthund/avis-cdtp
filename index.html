@@ -4,36 +4,56 @@
     <title>(Debug) AVIS Candidate Test Portal</title>
     <script src="./lib/sql.js"></script>
     <script src="./bin/app.js"></script>
+    <script>
+
+    </script>
     <link rel="stylesheet" href="./bin/gui.css">
 </head>
 <body>
     <div class="CDTP">
-        <div class="CDTP-Init">
+        <div class="CDTP-Init" id="0">
             <img src="./bin/banner.png" width="256px"><p><b>Authentication</b></p>
-            <input type="password" id="pass" placeholder="Enter passphrase">
-            <button onclick="initDB(document.getElementById('pass').value,true)">Encrypt</button>
+            <input type="password" id="pass" placeholder="Enter passphrase" oninput="
+                if (this.type == 'text') {
+                    this.type = 'password';
+                    this.value = '';
+                }">
             <button onclick="
-                hideShow('CDTP-Init','CDTP-Main');
-                hideShow('CDTP-Init','CDTP-Track');
-                initDB(document.getElementById('pass').value,false);
-                progTrack()">Decrypt</button>
+                encryptBtn();
+                async function encryptBtn() {
+                    const passIn = document.getElementById('pass');
+                    passIn.value = await sha256(passIn.value);
+                    initDB(passIn.value,true);
+                }">Encrypt</button>
+            <button onclick="
+                decryptBtn();
+                async function decryptBtn() {
+                    const passIn = document.getElementById('pass');
+                    passIn.value = await sha256(passIn.value);
+                    if (await initDB(passIn.value,false)) {
+                        gotoPage([0],[1,2]);
+                        progTrack();
+                    } else {
+                        passIn.value = 'Wrong password!';
+                        passIn.type = 'text';
+                    }
+                }">Decrypt</button>
         </div>
-        <div class="CDTP-Main" style="display:none;">
+        <div class="CDTP-Main" id="1" style="display:none;">
             <img src="./bin/banner.png" width="256px">
             <div id="output"></div>
         </div>
-        <div class="CDTP-Track" style="display:none;">
+        <div class="CDTP-Track" id="2" style="display:none;">
             <div id="prog"></div>
-            <input type="text" id="qnum" oninput="document.getElementById('qbtn').innerHTML='Go to question'"placeholder="Enter question number here" value="1">
-            <button id="qbtn" onclick="qNumField(parseInt(document.getElementById('qnum').value))">Next question</button>
+            <input type="text" id="qnum" oninput="document.getElementById('qbtn').textContent='Go to question'"placeholder="Enter question number here" value="1">
+            <button id="qbtn" onclick="qNumField(parseInt(document.getElementById('qnum').value))">Begin test</button>
         </div>
-        <div class="CDTP-Debug" style="display:none;">
+        <div class="CDTP-Debug" id="3" style="display:none;">
             <b>Debug log</b><p></p>
             <div class="debug">
                 <div data-active="true"></div>
             </div>
         </div>
-
     </div>
 </body>
 </html>
