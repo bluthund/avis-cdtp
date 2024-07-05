@@ -178,8 +178,8 @@ function createTable(qnum) {
                         class='ansel_${qnum}' 
                         id='${i}' 
                         onchange='
-                            gotoPage([],[3]);
-                            updateSelectedOptions('${qnum}')' 
+                            gotoPage([],[4]);
+                            updateSelectedOptions("${qnum}")' 
                         ${check}>
                 </div>
                 <div class='opt_label'>

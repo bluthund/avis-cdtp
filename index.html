@@ -11,45 +11,60 @@
 </head>
 <body>
     <div class="CDTP">
-        <div class="CDTP-Init" id="0">
-            <img src="./bin/banner.png" width="256px"><p><b>Authentication</b></p>
-            <input type="password" id="pass" placeholder="Enter passphrase" oninput="
-                if (this.type == 'text') {
-                    this.type = 'password';
-                    this.value = '';
-                }">
-            <button onclick="
-                encryptBtn();
-                async function encryptBtn() {
-                    const passIn = document.getElementById('pass');
-                    passIn.value = await sha256(passIn.value);
-                    initDB(passIn.value,true);
-                }">Encrypt</button>
-            <button onclick="
-                decryptBtn();
-                async function decryptBtn() {
-                    const passIn = document.getElementById('pass');
-                    passIn.value = await sha256(passIn.value);
-                    if (await initDB(passIn.value,false)) {
-                        gotoPage([0],[1,2]);
-                        progTrack();
-                    } else {
-                        passIn.value = 'Wrong password!';
-                        passIn.type = 'text';
-                    }
-                }">Decrypt</button>
+        <div class="CDTP-Intro" id="0">
+            <img src="./bin/banner.png" width="256px">
+            <div style="font-weight:900">Rules and regulations</div>
+            Welcome to the new AVIS candidacy test! We intend to test your knowledge as thoroughly as possible, while using a system that recognizes that people do make mistakes. 
+            <ul>
+                <li><b>Pure MCQ:</b> every question can have 1 or more correct options</li>
+                <li><b>Partial marking:</b></li> each option is assigned a fractional value depending on the number of correct and incorrect answers. For example, if there are 4 options of which 1 is right and 3 are wrong, each right answer will give you +1/<b>1</b>, and each wrong answer -1/<b>3</b>
+            </ul>
+            <button onclick="gotoPage([0],[1])">Begin test</button>
         </div>
-        <div class="CDTP-Main" id="1" style="display:none;">
+        <div class="CDTP-Init" id="1" style="display:none;">
+            <img src="./bin/banner.png" width="256px">
+            <div style="font-weight:900">Authentication
+                <input type="password" id="pass" placeholder="Enter passphrase" oninput="
+                    if (this.type == 'text') {
+                        this.type = 'password';
+                        this.value = '';
+                    }">
+            </div>
+            <div>
+                <button onclick="
+                    encryptBtn();
+                    async function encryptBtn() {
+                        const passIn = document.getElementById('pass');
+                        passIn.value = await sha256(passIn.value);
+                        initDB(passIn.value,true);
+                    }">Encrypt</button>
+                <button onclick="
+                    decryptBtn();
+                    async function decryptBtn() {
+                        const passIn = document.getElementById('pass');
+                        passIn.value = await sha256(passIn.value);
+                        if (await initDB(passIn.value,false)) {
+                            gotoPage([1],[2,3]);
+                            qNumField(0);
+                            progTrack();
+                        } else {
+                            passIn.value = 'Wrong password!';
+                            passIn.type = 'text';
+                        }
+                    }">Decrypt</button>
+            </div>
+        </div>
+        <div class="CDTP-Main" id="2" style="display:none;">
             <img src="./bin/banner.png" width="256px">
             <div id="output"></div>
         </div>
-        <div class="CDTP-Track" id="2" style="display:none;">
+        <div class="CDTP-Track" id="3" style="display:none;">
             <div id="prog"></div>
-            <input type="text" id="qnum" oninput="document.getElementById('qbtn').textContent='Go to question'"placeholder="Enter question number here" value="1">
+            <input type="text" id="qnum" oninput="document.getElementById('qbtn').textContent='Go to question'" placeholder="Enter question number here" value="1">
             <button id="qbtn" onclick="qNumField(parseInt(document.getElementById('qnum').value))">Begin test</button>
         </div>
-        <div class="CDTP-Debug" id="3" style="display:none;">
-            <b>Debug log</b><p></p>
+        <div class="CDTP-Debug" id="4" style="display:none;">
+            <div style="font-weight:900">Debug log</div>
             <div class="debug">
                 <div data-active="true"></div>
             </div>
